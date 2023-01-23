@@ -10,7 +10,7 @@ public:
     KalmanFilter(Eigen::VectorXd x, Eigen::MatrixXd A, Eigen::MatrixXd H,Eigen::MatrixXd Q,Eigen::MatrixXd R);
     ~KalmanFilter();
     void predict();
-    void update(Eigen::Vector3d gyro, Eigen::Vector3d accel);
+    void update(Eigen::Vector3d z);
     Eigen::VectorXd state();
 
 private:

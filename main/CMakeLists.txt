@@ -5,8 +5,8 @@ set(SOURCES
         ./Bmx055Driver.cpp
         ./EspGPIO.cpp
         ./EspI2CMaster.cpp
-        ./EspOledDriver.cpp 
         ./KalmanFilter.cpp
+        ./EEPROMHandler.cpp
 )
 
 idf_component_register(
@@ -25,6 +25,11 @@ idf_component_register(
         # eigen
         eigen
 
-        # User libraries here
-        
+        # Flash storage
+        nvs_flash
+
+        esp_wifi
+
+        esp_http_server
+
 )

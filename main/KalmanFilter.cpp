@@ -14,7 +14,7 @@ void KalmanFilter::predict() {
     P = A * P * A.transpose() + Q;
 }
 
-void KalmanFilter::update(Eigen::Vector3d z, Eigen::Vector3d u) {
+void KalmanFilter::update(Eigen::Vector3d z) {
     Eigen::VectorXd y = z - H * x;
     Eigen::MatrixXd S = H * P * H.transpose() + R;
     Eigen::MatrixXd K = P * H.transpose() * S.inverse();

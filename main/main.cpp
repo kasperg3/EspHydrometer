@@ -6,9 +6,11 @@
 #include "EspI2CMaster.h"
 #include "eigen3/Eigen/Dense"
 #include "KalmanFilter.h"
+#include "EEPROMHandler.cpp"
 
-static const float PI = 3.14159265359;
 static const char *TAG = "MAIN";
+#define RAD_TO_DEG(x) ((x) * 180.0 / M_PI)
+
 using namespace Eigen;
 
 void gpioTest(void *parameter)
@@ -46,9 +48,14 @@ void imuTest()
     double accData[3] = {0};
     double gyrData[3] = {0};
 
+    imu.getAccAngle(accData);
+
+
     // State vector
     VectorXd x(6);
-    x << 0, 0, 0, 0, 0, 0;
+    x << accData[0], accData[1], accData[2], 0, 0, 0;
+    // Measurement vector
+    VectorXd y(6); 
 
     // State transition matrix
     MatrixXd A(6, 6);
@@ -83,29 +90,50 @@ void imuTest()
     // Initialize Kalman filter
     KalmanFilter kf(x, A, H, Q, R);
 
-
     while (true)
     {
         imu.getAccAngle(accData);
         imu.getGyroRelativeAngle(gyrData);
-
+        y << accData[0], accData[1],accData[2], gyrData[0],gyrData[1],gyrData[2];
         // Update the state estimate
         kf.predict();
-        kf.update(Vector3d(gyrData),Vector3d(accData));
+        kf.update(y);
         Eigen::Vector3d state = kf.state();
         
         // Print estimated roll, pitch, and yaw angles
-        ESP_LOGI(TAG, "Estimated angles: x: %f , y: %f , z: %f", state[0] * 180 / PI, state[1] * 180 / PI, state[2] * 180 / PI);
+        ESP_LOGI(TAG, "Estimated angles: x: %f , y: %f , z: %f",  RAD_TO_DEG(state[0]), RAD_TO_DEG(state[1]),  RAD_TO_DEG(state[2]));
 
-        ESP_LOGI(TAG, "GYROMETER: x: %f , y: %f , z: %f  ", gyrData[0] * 180 / PI, gyrData[1] * 180 / PI, gyrData[2] * 180 / PI);
-        ESP_LOGI(TAG, "ACCELEROMETER: x: %f , y: %f , z: %f  ", accData[0] * 180 / PI, accData[1] * 180 / PI, accData[2] * 180 / PI);
+        ESP_LOGI(TAG, "GYROMETER: x: %f , y: %f , z: %f  ",  RAD_TO_DEG(gyrData[0]),  RAD_TO_DEG(gyrData[1]),  RAD_TO_DEG(gyrData[2]));
+        ESP_LOGI(TAG, "ACCELEROMETER: x: %f , y: %f , z: %f  ",  RAD_TO_DEG(accData[0]),  RAD_TO_DEG(accData[1]),  RAD_TO_DEG(accData[2]));
         vTaskDelay(10);
     }
 
     // TODO
-    // Kalman filter
-    // Calculate tilt wrt. gravity/horizontal
+    // Use the IMU data to determine the angle of tilt
+    //      IMU Bias correction should be a static value, do a measurement and set it as a constant
+    //      IMU calibration: place on level surface and correct the error?
+    // Store the datapoints using 
     // Create a polynominal regression from tilt to specific gravity
+    // Create a matrix to hold the data points
+    // MatrixXd data(N, 2);
+
+    // // Fill the matrix with the x and y values
+    // for (int i = 0; i < N; i++)
+    // {
+    //     data(i, 0) https://en.wikipedia.org/wiki/Numerical_methods_for_linear_least_squares= x[i];
+    //     data(i, 1) = y[i];
+    // }
+
+    // // Perform polynomial regression
+    // MatrixXd X(N, degree+1);
+    // for (int i = 0; i < N; i++) {
+    //     for (int j = 0; j < degree+1; j++)
+    //         X(i,j) = pow(data(i,0),j);
+    // }
+    // MatrixXd X_T = X.transpose();
+    // MatrixXd B = (X_T * X).inverse() * X_T * data.col(1);
+    // cout << "The polynomial coefficients are:" << endl << B << endl;
+    // return 0;
 }
 
 // # Work in progress
